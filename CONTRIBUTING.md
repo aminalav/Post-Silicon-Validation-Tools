@@ -153,7 +153,42 @@ ruff check sep tests && pytest -q
 
 ---
 
-## 6. Project layout
+## 6. Branching & pull-request workflow
+
+`main` is protected: it can't be pushed to directly, and changes land via pull
+requests that pass CI. Even as a solo maintainer, this keeps `main` always
+green and gives every change a reviewable history.
+
+```bash
+# 1. Start from an up-to-date main
+git checkout main
+git pull
+
+# 2. Branch (use a type/short-description name)
+git checkout -b feat/wafer-corner-yield      # or fix/..., chore/..., docs/...
+
+# 3. Work, keeping CI green locally as you go
+ruff check sep tests && pytest -q
+
+# 4. Commit and push the branch
+git add -A
+git commit -m "Add per-corner yield endpoint"
+git push -u origin HEAD
+
+# 5. Open a PR (fills in the template)
+gh pr create --fill
+
+# 6. Let CI run, then merge (squash keeps main history tidy)
+gh pr merge --squash --delete-branch
+```
+
+Branch name conventions: `feat/…` (feature), `fix/…` (bug fix),
+`chore/…` (tooling/maintenance), `docs/…` (documentation).
+
+Tip: `gh pr merge --squash --auto --delete-branch` enables auto-merge — GitHub
+merges the PR automatically once required CI checks pass.
+
+## 7. Project layout
 
 ```
 cpp/        C++ core (log parser, register decoder) + pybind11 bindings
