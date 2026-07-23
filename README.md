@@ -108,6 +108,12 @@ fallback with an identical interface.
 pytest            # Python: core + end-to-end pipeline
 ```
 
+## Contributing / learning the codebase
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for dev setup, common commands, and a
+guided code-reading tour (a fast path to understanding the C++/pybind11 core,
+the SQL layer, and the full-stack flow).
+
 ## Project layout
 
 ```
