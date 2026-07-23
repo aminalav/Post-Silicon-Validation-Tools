@@ -125,7 +125,18 @@ PDF. Cheap to build once the DB exists; high perceived value.
 
 ---
 
-## 4. How to extend it (good first exercises)
+## 4. Learning checkpoints
+
+Runnable, dependency-free scripts in [`learn/`](learn/) that build intuition:
+
+```bash
+python learn/01_cpp_vs_python_parser.py   # C++ vs Python parser + benchmark
+python learn/02_schmoo_edge.py            # move the Schmoo pass/fail edge
+```
+
+See [`learn/README.md`](learn/README.md) for what each one teaches.
+
+## 5. How to extend it (good first exercises)
 
 - **Add a test** to `tests/` — e.g., assert Schmoo pass-rate rises with voltage.
 - **Add an API endpoint** — surface `sep/analysis` output not yet exposed
@@ -142,7 +153,7 @@ ruff check sep tests && pytest -q
 
 ---
 
-## 5. Project layout
+## 6. Project layout
 
 ```
 cpp/        C++ core (log parser, register decoder) + pybind11 bindings

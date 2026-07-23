@@ -1,6 +1,8 @@
 """Tests for the parsing/decoding core (works with either backend)."""
 
-from sep import core
+import pytest
+
+from sep import _pyfallback, core
 
 
 def test_backend_reports_valid_value():
@@ -43,3 +45,23 @@ def test_compare_flags_only_differences():
     assert diffs[0].name == "A"
     assert diffs[0].expected == 0x2
     assert diffs[0].actual == 0xF
+
+
+@pytest.mark.skipif(core.BACKEND != "cpp", reason="C++ extension not built")
+def test_cpp_and_python_fallback_agree():
+    """The pure-Python fallback must match the compiled C++ core exactly."""
+    text = """# header
+D1,VDD,0.80,0.75,0.85
+D2,IDDQ,95.0,0.0,90.0
+D3,FMAX,2.7,2.2,3.2
+"""
+    import sep_core
+
+    cpp = sep_core.parse_log_string(text)
+    py = _pyfallback.parse_log_string(text)
+    assert len(cpp) == len(py)
+    for c, p in zip(cpp, py, strict=True):
+        assert c.die_id == p.die_id
+        assert c.test_name == p.test_name
+        assert c.value == p.value
+        assert bool(c.pass_) == bool(p.pass_)
