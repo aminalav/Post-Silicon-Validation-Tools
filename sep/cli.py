@@ -35,7 +35,8 @@ def generate(
     seed: int = typer.Option(42, help="RNG seed"),
 ) -> None:
     """Generate a synthetic post-silicon data lot."""
-    from sep.datagen.generator import GenConfig, generate as gen
+    from sep.datagen.generator import GenConfig
+    from sep.datagen.generator import generate as gen
 
     path = gen(out, GenConfig(lot_id=lot_id, n_wafers=wafers, grid=grid, seed=seed))
     typer.echo(f"generated lot at {path}")
@@ -105,7 +106,8 @@ def demo(
     db_url: str = typer.Option("sqlite:///sep.db", help="database URL"),
 ) -> None:
     """One-shot: generate -> ingest -> report (great for a fresh clone)."""
-    from sep.datagen.generator import GenConfig, generate as gen
+    from sep.datagen.generator import GenConfig
+    from sep.datagen.generator import generate as gen
     from sep.db.ingest import ingest as do_ingest
     from sep.reports import generate_report
 

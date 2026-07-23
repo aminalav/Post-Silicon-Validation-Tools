@@ -25,7 +25,7 @@ class Lot(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     lot_id: Mapped[str] = mapped_column(String, unique=True, index=True)
     product: Mapped[str] = mapped_column(String)
-    wafers: Mapped[list["Wafer"]] = relationship(back_populates="lot")
+    wafers: Mapped[list[Wafer]] = relationship(back_populates="lot")
 
 
 class Wafer(Base):
@@ -34,7 +34,7 @@ class Wafer(Base):
     lot_pk: Mapped[int] = mapped_column(ForeignKey("lot.id"), index=True)
     wafer_number: Mapped[int] = mapped_column(Integer)
     lot: Mapped[Lot] = relationship(back_populates="wafers")
-    dies: Mapped[list["Die"]] = relationship(back_populates="wafer")
+    dies: Mapped[list[Die]] = relationship(back_populates="wafer")
 
 
 class Die(Base):
@@ -47,9 +47,9 @@ class Die(Base):
     process_corner: Mapped[str] = mapped_column(String)
     final_bin: Mapped[int] = mapped_column(Integer, index=True)
     wafer: Mapped[Wafer] = relationship(back_populates="dies")
-    measurements: Mapped[list["Measurement"]] = relationship(back_populates="die")
-    schmoo: Mapped[list["SchmooPoint"]] = relationship(back_populates="die")
-    reg_dumps: Mapped[list["RegDump"]] = relationship(back_populates="die")
+    measurements: Mapped[list[Measurement]] = relationship(back_populates="die")
+    schmoo: Mapped[list[SchmooPoint]] = relationship(back_populates="die")
+    reg_dumps: Mapped[list[RegDump]] = relationship(back_populates="die")
 
 
 class Test(Base):
@@ -58,7 +58,7 @@ class Test(Base):
     name: Mapped[str] = mapped_column(String, unique=True, index=True)
     lower_limit: Mapped[float] = mapped_column(Float)
     upper_limit: Mapped[float] = mapped_column(Float)
-    measurements: Mapped[list["Measurement"]] = relationship(back_populates="test")
+    measurements: Mapped[list[Measurement]] = relationship(back_populates="test")
 
 
 class Measurement(Base):

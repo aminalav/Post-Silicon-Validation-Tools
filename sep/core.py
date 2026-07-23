@@ -92,7 +92,7 @@ except ImportError:  # Pure-Python fallback.
     def parse_log_string(contents: str) -> list[TestRecord]:
         return _parse_lines(contents.splitlines())
 
-    def make_field(name: str, lsb: int, width: int) -> "Field":
+    def make_field(name: str, lsb: int, width: int) -> Field:
         return Field(name, lsb, width)
 
     def _extract(raw: int, lsb: int, width: int) -> int:

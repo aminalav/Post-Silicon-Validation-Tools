@@ -1,5 +1,10 @@
 # Silicon Engineering Platform
 
+[![CI](https://github.com/aminalav/Post-Silicon-Validation-Tools/actions/workflows/ci.yml/badge.svg)](https://github.com/aminalav/Post-Silicon-Validation-Tools/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 A post-silicon validation analytics platform: it generates realistic synthetic
 silicon test data, parses and decodes it with a **C++ core** (exposed to Python
 via pybind11), stores it in a relational database, runs **yield & failure
@@ -9,6 +14,18 @@ plots** and **wafer maps** — plus automated HTML/PDF reports.
 > Built to demonstrate post-silicon validation domain skills alongside
 > production-grade software engineering across C++, Python, SQL, and web.
 > See [`BUILD_PLAN.md`](BUILD_PLAN.md) for the design and 2-week roadmap.
+
+## Dashboard
+
+![Engineering dashboard](docs/images/dashboard.png)
+
+Yield summary, failure Pareto, wafer map (spatial pass/fail with realistic
+radial yield loss), and a Schmoo plot (voltage × frequency operating envelope).
+The `core: cpp` badge indicates the compiled C++ parser is active.
+
+Auto-generated REST API (FastAPI / OpenAPI):
+
+![API docs](docs/images/api-docs.png)
 
 ## Architecture
 
