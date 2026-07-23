@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Validation Report — {{ lot_id }}</title>
+  <style>
+    body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 40px; color: #1a1a1a; }
+    h1 { border-bottom: 3px solid #2b6cb0; padding-bottom: 8px; }
+    h2 { color: #2b6cb0; margin-top: 32px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #cbd5e0; padding: 8px 12px; text-align: left; }
+    th { background: #edf2f7; }
+    .kpi { display: inline-block; margin-right: 32px; }
+    .kpi .num { font-size: 32px; font-weight: 700; color: #2b6cb0; }
+    .kpi .label { color: #4a5568; font-size: 13px; }
+    .muted { color: #718096; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Post-Silicon Validation Report</h1>
+  <p class="muted">Lot <strong>{{ lot_id }}</strong> &middot; generated {{ generated_at }}
+     &middot; parser backend: {{ backend }}</p>
+
+  <h2>Summary</h2>
+  <div class="kpi"><div class="num">{{ summary.total_dies }}</div><div class="label">Total dies</div></div>
+  <div class="kpi"><div class="num">{{ summary.overall_yield_pct }}%</div><div class="label">Overall yield</div></div>
+  <div class="kpi"><div class="num">{{ summary.passed }}</div><div class="label">Passing dies</div></div>
+
+  <h2>Yield by wafer</h2>
+  <table>
+    <tr><th>Wafer</th><th>Total</th><th>Passed</th><th>Yield %</th></tr>
+    {% for w in summary.per_wafer %}
+    <tr><td>{{ w.wafer_number }}</td><td>{{ w.total }}</td><td>{{ w.passed }}</td><td>{{ w.yield_pct }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Bin breakdown</h2>
+  <table>
+    <tr><th>Bin</th><th>Name</th><th>Count</th></tr>
+    {% for b in summary.bins %}
+    <tr><td>{{ b.bin }}</td><td>{{ b.name }}</td><td>{{ b.count }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Top failing tests (Pareto)</h2>
+  <table>
+    <tr><th>Test</th><th>Fail count</th><th>Cumulative %</th></tr>
+    {% for p in pareto %}
+    <tr><td>{{ p.test_name }}</td><td>{{ p.fail_count }}</td><td>{{ p.cum_pct }}</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

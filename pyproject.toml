@@ -1,0 +1,63 @@
+[build-system]
+requires = ["scikit-build-core>=0.8", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "sep"
+version = "0.1.0"
+description = "Silicon Engineering Platform — post-silicon validation analytics"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Amin Alavi" }]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "sqlalchemy>=2.0",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "jinja2>=3.1",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+reports = ["weasyprint>=61"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "black>=24.0",
+    "mypy>=1.9",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+sep = "sep.cli:app"
+
+[tool.scikit-build]
+# Build the C++ extension defined in the top-level CMakeLists.txt.
+cmake.version = ">=3.15"
+wheel.packages = ["sep"]
+# On-demand editable rebuild needs cmake on PATH at runtime; keep it off so the
+# extension built at install time is used directly. Re-run `pip install -e .`
+# after changing C++ sources.
+editable.rebuild = false
+build-dir = "build/{wheel_tag}"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.black]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = true

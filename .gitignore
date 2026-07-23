@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# C++ / CMake
+build/
+*.so
+*.dylib
+*.o
+*.obj
+_skbuild/
+CMakeCache.txt
+CMakeFiles/
+
+# Data (generated) — keep the dir, ignore large contents
+data/*
+!data/.gitkeep
+
+# DB
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated report output
+/reports/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# Tooling
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.DS_Store

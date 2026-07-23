@@ -1,0 +1,17 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SEP_DB_URL: sqlite:////app/sep.db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Vite reads this at build/runtime to reach the API.
+      VITE_API_BASE: http://localhost:8000
+    depends_on:
+      - api
