@@ -17,10 +17,13 @@ Everything is seeded for reproducibility.
 from __future__ import annotations
 
 import csv
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+
+from sep.registers import DEFAULT_SPEC_PATH, load_spec_rows
 
 # Process corners shift the mean of parametric measurements.
 CORNERS = ["TT", "FF", "SS", "FS", "SF"]
@@ -35,23 +38,10 @@ _TEST_SPECS = [
     ("TEMP_SENSOR", "C", 25.0, 1.5, 18.0, 32.0),
 ]
 
-# Register spec used both to generate raw values and (elsewhere) to decode them.
-# (field_name, lsb, width)
-REG_SPEC = [
-    ("ENABLE", 0, 1),
-    ("MODE", 1, 3),
-    ("VOLTAGE_TRIM", 4, 5),
-    ("FREQ_DIV", 9, 4),
-    ("STATUS", 13, 3),
-    ("ERROR_CODE", 16, 8),
-    ("REVISION", 24, 8),
-]
-
 
 @dataclass
 class GenConfig:
     lot_id: str = "LOT001"
-    product: str = "SEP-SOC-A0"
     n_wafers: int = 3
     grid: int = 12  # dies laid out on a grid x grid square, circle-masked
     seed: int = 42
@@ -148,7 +138,8 @@ def generate(out_dir: str | Path, config: GenConfig | None = None) -> Path:
                schmoo_rows)
     _write_csv(out / "registers.csv",
                ["die_id", "reg_name", "raw_value"], reg_rows)
-    _write_reg_spec(out / "register_spec.csv")
+    # Package the canonical register map with the lot (self-describing artifact).
+    shutil.copy(DEFAULT_SPEC_PATH, out / "register_spec.csv")
 
     return out
 
@@ -165,7 +156,7 @@ def _build_register(rng: np.random.Generator, weak: bool, die_fail: bool) -> int
         "REVISION": 0xA0,
     }
     raw = 0
-    for name, lsb, width in REG_SPEC:
+    for name, lsb, width in load_spec_rows():
         raw |= (fields[name] & ((1 << width) - 1)) << lsb
     if weak:  # nudge a status bit so weak dies look different when decoded
         raw |= 1 << 15
@@ -192,9 +183,3 @@ def _write_test_log(path: Path, rows: list) -> None:
         for die_id, name, value, lo, hi in rows:
             fh.write(f"{die_id},{name},{value},{lo},{hi}\n")
 
-
-def _write_reg_spec(path: Path) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as fh:
-        w = csv.writer(fh)
-        w.writerow(["name", "lsb", "width"])
-        w.writerows([[n, lsb, width] for n, lsb, width in REG_SPEC])

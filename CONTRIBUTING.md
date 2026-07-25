@@ -66,9 +66,9 @@ pip install -e .
 ```
 
 If the compiled module ever fails to load, the platform automatically falls
-back to a pure-Python implementation (`sep/core.py`) — `sep info` will then
-print `python` instead of `cpp`. That's the safety net; for the C++ learning
-goal you want it saying `cpp`.
+back to `sep/_pyfallback.py` (selected by `sep/core.py`) — `sep info` will
+then print `python` instead of `cpp`. That's the safety net; for the C++
+learning goal you want it saying `cpp`.
 
 ---
 
@@ -97,10 +97,10 @@ This is the C/C++ learning centerpiece.
 - `CMakeLists.txt` (repo root) — how the module is compiled and named
   `sep_core`.
 
-### Step 3 — The Python/C++ seam: `sep/core.py`
-Shows the `try: import sep_core / except ImportError:` pattern that prefers the
-compiled module but degrades gracefully to pure Python behind an identical
-interface. Compare the two implementations side by side — same behavior, two
+### Step 3 — The Python/C++ seam: `sep/core.py` + `sep/_pyfallback.py`
+`core.py` is the selector (`try: import sep_core / except ImportError:`).
+`_pyfallback.py` is the pure-Python implementation with the same interface.
+Compare `_pyfallback.py` to the C++ sources side by side — same behavior, two
 languages.
 
 ### Step 4 — Storage: `sep/db/models.py` then `sep/db/ingest.py`
@@ -143,7 +143,8 @@ See [`learn/README.md`](learn/README.md) for what each one teaches.
   (e.g., per-corner yield), then chart it in `App.jsx`.
 - **Enrich the C++ parser** — support a second log line format or a real-ish
   header, then update `test_core.py`. Recompile with `pip install -e .`.
-- **Add a register spec** in `specs/` and wire `/api/registers` to select it.
+- **Extend the register map** in `specs/core_status.csv` (the single source of
+  truth loaded by generate + decode) and add a second register.
 
 Before pushing, keep CI green:
 
