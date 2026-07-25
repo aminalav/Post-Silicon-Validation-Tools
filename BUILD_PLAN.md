@@ -1,5 +1,11 @@
 # Silicon Engineering Platform — Build Plan
 
+> **Historical.** This was the original 2-week design/roadmap used to scaffold
+> the project. For current architecture, setup, and how to work in the repo,
+> prefer [`README.md`](README.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+> Some details below (schema fields, layout, unchecked DoD, stretch goals) may
+> lag the code.
+
 > A post-silicon validation analytics platform. Ingests test logs, register
 > dumps, and Schmoo sweeps; stores them in a relational DB; runs yield/failure
 > analysis; and surfaces everything through a dashboard with Schmoo plots and

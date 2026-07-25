@@ -14,5 +14,4 @@ export const api = {
   wafermap: (w) => get(`/api/wafermap/${w}`),
   schmoo: (dieId) => get(`/api/schmoo/${dieId}`),
   dies: (w) => get(`/api/dies?wafer_number=${w}`),
-  registers: (dieId) => get(`/api/registers/${dieId}`),
 };

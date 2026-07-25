@@ -10,8 +10,6 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from sqlalchemy import select
-
 from sep import core
 from sep.db.models import (
     Base,
@@ -127,23 +125,3 @@ def ingest(lot_dir: str | Path, db_url: str = "sqlite:///sep.db", *, reset: bool
 def _read_csv(path: Path):
     with open(path, newline="", encoding="utf-8") as fh:
         yield from csv.DictReader(fh)
-
-
-def yield_by_wafer(db_url: str = "sqlite:///sep.db") -> list[dict]:
-    """Quick sanity query: pass yield per wafer (final_bin == 1 is pass)."""
-    engine = get_engine(db_url)
-    with get_session(engine) as session:
-        rows = []
-        for wafer in session.scalars(select(Wafer)).all():
-            dies = wafer.dies
-            total = len(dies)
-            passed = sum(1 for d in dies if d.final_bin == 1)
-            rows.append(
-                {
-                    "wafer_number": wafer.wafer_number,
-                    "total": total,
-                    "passed": passed,
-                    "yield_pct": round(100.0 * passed / total, 2) if total else 0.0,
-                }
-            )
-        return rows

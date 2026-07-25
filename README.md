@@ -13,7 +13,8 @@ plots** and **wafer maps** — plus automated HTML/PDF reports.
 
 > Built to demonstrate post-silicon validation domain skills alongside
 > production-grade software engineering across C++, Python, SQL, and web.
-> See [`BUILD_PLAN.md`](BUILD_PLAN.md) for the design and 2-week roadmap.
+> See [`BUILD_PLAN.md`](BUILD_PLAN.md) for the original (historical) design
+> roadmap, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for current setup/learning.
 
 ## Dashboard
 
@@ -99,8 +100,8 @@ Two compiled components live in [`cpp/`](cpp/) and are exposed as the
 - **`reg_decoder`** — spec-driven bitfield extraction and expected/actual compare.
 
 They sit on the critical data path (used by ingest and the API). If the
-extension isn't built, [`sep/core.py`](sep/core.py) provides a pure-Python
-fallback with an identical interface.
+extension isn't built, [`sep/core.py`](sep/core.py) selects the pure-Python
+fallback in [`sep/_pyfallback.py`](sep/_pyfallback.py) (identical interface).
 
 ## Testing
 
