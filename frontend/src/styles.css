@@ -39,3 +39,8 @@ table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #334155; }
 th { color: var(--muted); font-weight: 600; }
 .error { color: #f87171; }
+.hint, .muted { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.ok { color: #22c55e; font-weight: 600; }
+.bad { color: #f87171; font-weight: 600; }
+.row-bad td { color: #fca5a5; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); }

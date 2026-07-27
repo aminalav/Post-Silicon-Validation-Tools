@@ -8,10 +8,14 @@ async function get(path) {
 
 export const api = {
   health: () => get("/api/health"),
+  lot: () => get("/api/lot"),
   wafers: () => get("/api/wafers"),
   yieldSummary: () => get("/api/yield"),
   pareto: () => get("/api/pareto"),
   wafermap: (w) => get(`/api/wafermap/${w}`),
   schmoo: (dieId) => get(`/api/schmoo/${dieId}`),
   dies: (w) => get(`/api/dies?wafer_number=${w}`),
+  registers: (dieId) => get(`/api/registers/${dieId}`),
+  registerCompare: (expected, actual) =>
+    get(`/api/registers/compare?expected=${encodeURIComponent(expected)}&actual=${encodeURIComponent(actual)}`),
 };

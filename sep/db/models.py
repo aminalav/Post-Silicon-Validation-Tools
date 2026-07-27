@@ -90,6 +90,7 @@ class RegDump(Base):
     die_pk: Mapped[int] = mapped_column(ForeignKey("die.id"), index=True)
     reg_name: Mapped[str] = mapped_column(String)
     raw_value: Mapped[int] = mapped_column(Integer)
+    expected_value: Mapped[int | None] = mapped_column(Integer, nullable=True)
     die: Mapped[Die] = relationship(back_populates="reg_dumps")
 
 

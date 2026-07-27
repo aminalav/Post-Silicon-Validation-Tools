@@ -21,7 +21,7 @@ def generate_report(
 ) -> Path:
     """Render the validation report. Writes HTML always; PDF if ``pdf=True``.
 
-    Returns the path actually written.
+    Returns the path actually written (PDF path when ``pdf=True``).
     """
     env = Environment(
         loader=FileSystemLoader(str(_TEMPLATE_DIR)),
@@ -40,16 +40,22 @@ def generate_report(
     html_path = out_path.with_suffix(".html")
     html_path.write_text(html, encoding="utf-8")
 
-    if pdf:
-        try:
-            from weasyprint import HTML  # imported lazily; heavy optional dep
+    if not pdf:
+        return html_path
 
-            pdf_path = out_path.with_suffix(".pdf")
-            HTML(string=html).write_pdf(str(pdf_path))
-            return pdf_path
-        except ImportError as exc:  # pragma: no cover - depends on optional extra
-            raise RuntimeError(
-                "PDF export needs the 'reports' extra: pip install -e '.[reports]'"
-            ) from exc
+    try:
+        from weasyprint import HTML  # imported lazily; heavy optional dep
+    except ImportError as exc:  # pragma: no cover - depends on optional extra
+        raise RuntimeError(
+            "PDF export needs the 'reports' extra: pip install -e '.[reports]'"
+        ) from exc
 
-    return html_path
+    pdf_path = out_path.with_suffix(".pdf")
+    try:
+        HTML(string=html, base_url=str(_TEMPLATE_DIR)).write_pdf(str(pdf_path))
+    except Exception as exc:  # pragma: no cover - native cairo/pango issues
+        raise RuntimeError(
+            "PDF render failed (WeasyPrint needs system libraries like cairo/pango). "
+            f"HTML report is still available at {html_path}. Underlying error: {exc}"
+        ) from exc
+    return pdf_path

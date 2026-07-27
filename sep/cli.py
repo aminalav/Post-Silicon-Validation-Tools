@@ -30,6 +30,7 @@ def info() -> None:
 def generate(
     out: str = typer.Option("data", help="output directory"),
     lot_id: str = typer.Option("LOT001", help="lot identifier"),
+    product: str = typer.Option("SEP-SOC-A0", help="product name"),
     wafers: int = typer.Option(3, help="number of wafers"),
     grid: int = typer.Option(12, help="die grid size"),
     seed: int = typer.Option(42, help="RNG seed"),
@@ -38,7 +39,10 @@ def generate(
     from sep.datagen.generator import GenConfig
     from sep.datagen.generator import generate as gen
 
-    path = gen(out, GenConfig(lot_id=lot_id, n_wafers=wafers, grid=grid, seed=seed))
+    path = gen(
+        out,
+        GenConfig(lot_id=lot_id, product=product, n_wafers=wafers, grid=grid, seed=seed),
+    )
     typer.echo(f"generated lot at {path}")
 
 
@@ -79,7 +83,7 @@ def report(
 
 @app.command()
 def decode(
-    raw: str = typer.Argument(..., help="raw register value, e.g. 0x00A0130D"),
+    raw: str = typer.Argument(..., help="raw register value, e.g. 0xA000830D"),
 ) -> None:
     """Decode a raw CORE_STATUS register value into named fields."""
     from sep import registers
@@ -87,6 +91,24 @@ def decode(
     value = int(raw, 0)
     for f in registers.decode_value(value):
         typer.echo(f"  {f['name']:<14} [{f['lsb']}:+{f['width']}] = {f['value']}")
+
+
+@app.command("compare")
+def compare_cmd(
+    expected: str = typer.Argument(..., help="expected raw value"),
+    actual: str = typer.Argument(..., help="actual raw value"),
+) -> None:
+    """Compare expected vs actual CORE_STATUS values field-by-field."""
+    from sep import registers
+
+    exp, act = int(expected, 0), int(actual, 0)
+    mismatches = registers.compare_values(exp, act)
+    if not mismatches:
+        typer.echo("match: all fields equal")
+        return
+    typer.echo(f"mismatches ({len(mismatches)}):")
+    for m in mismatches:
+        typer.echo(f"  {m['name']:<14} expected={m['expected']} actual={m['actual']}")
 
 
 @app.command()
@@ -116,8 +138,13 @@ def demo(
     counts = do_ingest(path, db_url)
     typer.echo(f"ingested {counts}")
     Path("reports").mkdir(exist_ok=True)
-    rpt = generate_report(path.name, "reports/report", db_url)
-    typer.echo(f"report at {rpt}")
+    html = generate_report(path.name, "reports/report", db_url, pdf=False)
+    typer.echo(f"report at {html}")
+    try:
+        pdf_path = generate_report(path.name, "reports/report", db_url, pdf=True)
+        typer.echo(f"pdf at {pdf_path}")
+    except RuntimeError as exc:
+        typer.echo(f"pdf skipped: {exc}")
 
 
 if __name__ == "__main__":

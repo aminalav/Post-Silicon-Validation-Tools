@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
 from sep import analysis
 from sep import registers as reg
-from sep.db.models import Die, RegDump, Wafer, get_engine, get_session
+from sep.db.models import Die, Lot, RegDump, Wafer, get_engine, get_session
 
 DB_URL = os.environ.get("SEP_DB_URL", "sqlite:///sep.db")
 
@@ -32,6 +32,16 @@ def health() -> dict:
     from sep import core
 
     return {"status": "ok", "core_backend": core.BACKEND}
+
+
+@app.get("/api/lot")
+def lot() -> dict:
+    engine = get_engine(DB_URL)
+    with get_session(engine) as session:
+        row = session.scalars(select(Lot)).first()
+        if row is None:
+            raise HTTPException(status_code=404, detail="no lot ingested")
+        return {"lot_id": row.lot_id, "product": row.product}
 
 
 @app.get("/api/wafers")
@@ -87,6 +97,24 @@ def dies(wafer_number: int | None = None, limit: int = 100) -> list[dict]:
         ]
 
 
+@app.get("/api/registers/compare")
+def register_compare(
+    expected: str = Query(..., description="Expected raw value, e.g. 0xA000830D"),
+    actual: str = Query(..., description="Actual raw value, e.g. 0xA000930D"),
+) -> dict:
+    exp = int(expected, 0)
+    act = int(actual, 0)
+    mismatches = reg.compare_values(exp, act)
+    return {
+        "expected": f"0x{exp:08X}",
+        "actual": f"0x{act:08X}",
+        "match": len(mismatches) == 0,
+        "mismatches": mismatches,
+        "expected_fields": reg.decode_value(exp),
+        "actual_fields": reg.decode_value(act),
+    }
+
+
 @app.get("/api/registers/{die_id}")
 def registers(die_id: str) -> dict:
     engine = get_engine(DB_URL)
@@ -97,9 +125,16 @@ def registers(die_id: str) -> dict:
         dump = session.scalar(select(RegDump).where(RegDump.die_pk == die.id))
         if dump is None:
             raise HTTPException(status_code=404, detail="no register dump")
+        expected = dump.expected_value
+        mismatches = (
+            reg.compare_values(expected, dump.raw_value) if expected is not None else []
+        )
         return {
             "die_id": die_id,
             "reg_name": dump.reg_name,
             "raw_value": f"0x{dump.raw_value:08X}",
+            "expected_value": f"0x{expected:08X}" if expected is not None else None,
             "fields": reg.decode_value(dump.raw_value),
+            "match": expected is None or len(mismatches) == 0,
+            "mismatches": mismatches,
         }

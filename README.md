@@ -82,14 +82,15 @@ sep info        # -> core backend: cpp   (or: python)
 | `sep yields` | Print the yield summary |
 | `sep report <lot_id>` | Write an HTML report (`--pdf` for PDF) |
 | `sep decode 0xA000830D` | Decode a raw register value into fields |
+| `sep compare <exp> <act>` | Field-level expected vs actual compare |
 | `sep serve` | Run the FastAPI server |
 | `sep demo` | generate → ingest → report in one step |
 
 ## API endpoints
 
-`/api/health`, `/api/yield`, `/api/pareto`, `/api/wafers`,
+`/api/health`, `/api/lot`, `/api/yield`, `/api/pareto`, `/api/wafers`,
 `/api/wafermap/{n}`, `/api/schmoo/{die_id}`, `/api/dies`,
-`/api/registers/{die_id}`. Interactive docs at `/docs`.
+`/api/registers/{die_id}`, `/api/registers/compare`. Interactive docs at `/docs`.
 
 ## The C++ core
 
@@ -106,7 +107,10 @@ fallback in [`sep/_pyfallback.py`](sep/_pyfallback.py) (identical interface).
 ## Testing
 
 ```bash
-pytest            # Python: core + end-to-end pipeline
+pytest -q          # Python: core + pipeline + registers
+# Native C++ (no Python):
+cmake -S cpp/tests -B build-cpp-tests && cmake --build build-cpp-tests
+ctest --test-dir build-cpp-tests --output-on-failure
 ```
 
 ## Contributing / learning the codebase

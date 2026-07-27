@@ -8,6 +8,7 @@ const BIN_NAME = { 1: "Pass", 2: "Functional fail", 4: "Edge/parametric" };
 
 export default function App() {
   const [health, setHealth] = useState(null);
+  const [lot, setLot] = useState(null);
   const [summary, setSummary] = useState(null);
   const [pareto, setPareto] = useState([]);
   const [wafers, setWafers] = useState([]);
@@ -16,12 +17,14 @@ export default function App() {
   const [dies, setDies] = useState([]);
   const [die, setDie] = useState(null);
   const [schmoo, setSchmoo] = useState(null);
+  const [regs, setRegs] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    Promise.all([api.health(), api.yieldSummary(), api.pareto(), api.wafers()])
-      .then(([h, s, p, w]) => {
+    Promise.all([api.health(), api.lot(), api.yieldSummary(), api.pareto(), api.wafers()])
+      .then(([h, l, s, p, w]) => {
         setHealth(h);
+        setLot(l);
         setSummary(s);
         setPareto(p);
         setWafers(w);
@@ -42,6 +45,7 @@ export default function App() {
   useEffect(() => {
     if (!die) return;
     api.schmoo(die).then(setSchmoo).catch(() => setSchmoo(null));
+    api.registers(die).then(setRegs).catch(() => setRegs(null));
   }, [die]);
 
   return (
@@ -49,6 +53,7 @@ export default function App() {
       <header>
         <h1>Silicon Engineering Platform</h1>
         {health && <span className="badge">core: {health.core_backend}</span>}
+        {lot && <span className="badge">{lot.product} · {lot.lot_id}</span>}
         <span className="badge">post-silicon validation analytics</span>
       </header>
 
@@ -101,6 +106,10 @@ export default function App() {
               data={[{
                 type: "scatter", mode: "markers",
                 x: wmap.dies.map((d) => d.x), y: wmap.dies.map((d) => d.y),
+                customdata: wmap.dies.map((d) => {
+                  const match = dies.find((x) => x.x === d.x && x.y === d.y);
+                  return match ? match.die_id : "";
+                }),
                 marker: {
                   size: 16, symbol: "square",
                   color: wmap.dies.map((d) => BIN_COLOR[d.final_bin] || "#64748b"),
@@ -111,8 +120,13 @@ export default function App() {
               layout={plotLayout({ height: 320, yaxis: { scaleanchor: "x" } })}
               config={{ displayModeBar: false }}
               style={{ width: "100%" }}
+              onClick={(ev) => {
+                const id = ev?.points?.[0]?.customdata;
+                if (id) setDie(id);
+              }}
             />
           )}
+          <p className="hint">Click a die to load its Schmoo + registers.</p>
         </section>
 
         <section className="panel">
@@ -125,11 +139,49 @@ export default function App() {
               data={[{
                 type: "heatmap", z: schmoo.z, x: schmoo.x_vals, y: schmoo.y_vals,
                 colorscale: [[0, "#ef4444"], [1, "#22c55e"]], showscale: false,
+                hovertemplate: "V=%{x} V<br>F=%{y} GHz<br>%{customdata}<extra></extra>",
+                customdata: schmoo.z.map((row) => row.map((v) => (v ? "PASS" : "FAIL"))),
               }]}
               layout={plotLayout({ height: 320, xaxis: { title: "voltage (V)" }, yaxis: { title: "frequency (GHz)" } })}
               config={{ displayModeBar: false }}
               style={{ width: "100%" }}
             />
+          )}
+        </section>
+
+        <section className="panel full">
+          <h2>Register decode — {die || "…"}</h2>
+          {regs ? (
+            <>
+              <p className="muted">
+                {regs.reg_name}: actual <code>{regs.raw_value}</code>
+                {regs.expected_value && <> · expected <code>{regs.expected_value}</code></>}
+                {" · "}
+                <span className={regs.match ? "ok" : "bad"}>
+                  {regs.match ? "MATCH" : `${regs.mismatches.length} mismatch(es)`}
+                </span>
+              </p>
+              <table>
+                <thead>
+                  <tr><th>Field</th><th>Bits</th><th>Actual</th><th>Expected</th></tr>
+                </thead>
+                <tbody>
+                  {regs.fields.map((f) => {
+                    const mm = (regs.mismatches || []).find((m) => m.name === f.name);
+                    return (
+                      <tr key={f.name} className={mm ? "row-bad" : ""}>
+                        <td>{f.name}</td>
+                        <td>[{f.lsb}:+{f.width}]</td>
+                        <td>{f.value}</td>
+                        <td>{mm ? mm.expected : f.value}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <p className="muted">Select a die to decode CORE_STATUS.</p>
           )}
         </section>
       </main>

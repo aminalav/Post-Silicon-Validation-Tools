@@ -17,6 +17,7 @@ Everything is seeded for reproducibility.
 from __future__ import annotations
 
 import csv
+import json
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,6 +43,7 @@ _TEST_SPECS = [
 @dataclass
 class GenConfig:
     lot_id: str = "LOT001"
+    product: str = "SEP-SOC-A0"
     n_wafers: int = 3
     grid: int = 12  # dies laid out on a grid x grid square, circle-masked
     seed: int = 42
@@ -121,14 +123,20 @@ def generate(out_dir: str | Path, config: GenConfig | None = None) -> Path:
                     passed = int(margin > 0)
                     schmoo_rows.append([die_id, "voltage", "frequency", v, f, passed])
 
-            # --- Register dump ---
-            raw = _build_register(rng, weak, die_fail)
-            reg_rows.append([die_id, "CORE_STATUS", f"0x{raw:08X}"])
+            # --- Register dump (actual + healthy expected for compare demos) ---
+            actual, expected = _build_register_pair(rng, weak, die_fail)
+            reg_rows.append(
+                [die_id, "CORE_STATUS", f"0x{actual:08X}", f"0x{expected:08X}"]
+            )
 
             # Final bin recorded on the die row later via a second pass is
             # overkill; store bin inline instead.
             dies_rows[-1].append(_bin_of(die_fail, weak))
 
+    (out / "lot.json").write_text(
+        json.dumps({"lot_id": cfg.lot_id, "product": cfg.product}, indent=2) + "\n",
+        encoding="utf-8",
+    )
     _write_csv(out / "dies.csv",
                ["die_id", "wafer_number", "x", "y", "process_corner", "final_bin"],
                dies_rows)
@@ -137,30 +145,50 @@ def generate(out_dir: str | Path, config: GenConfig | None = None) -> Path:
                ["die_id", "param_x", "param_y", "x_val", "y_val", "pass"],
                schmoo_rows)
     _write_csv(out / "registers.csv",
-               ["die_id", "reg_name", "raw_value"], reg_rows)
+               ["die_id", "reg_name", "raw_value", "expected_value"], reg_rows)
     # Package the canonical register map with the lot (self-describing artifact).
     shutil.copy(DEFAULT_SPEC_PATH, out / "register_spec.csv")
 
     return out
 
 
-def _build_register(rng: np.random.Generator, weak: bool, die_fail: bool) -> int:
-    """Assemble a 32-bit register value from the field spec."""
-    fields = {
+def _build_register_pair(
+    rng: np.random.Generator, weak: bool, die_fail: bool
+) -> tuple[int, int]:
+    """Return (actual, expected) CORE_STATUS values for one die.
+
+    Expected is the healthy golden (STATUS=OK, ERROR_CODE=0, no weak flag).
+    Actual may diverge on failing/weak dies so register compare is meaningful.
+    """
+    mode = int(rng.integers(0, 8))
+    trim = int(rng.integers(8, 24))
+    div = int(rng.integers(1, 16))
+    base = {
         "ENABLE": 1,
-        "MODE": int(rng.integers(0, 8)),
-        "VOLTAGE_TRIM": int(rng.integers(8, 24)),
-        "FREQ_DIV": int(rng.integers(1, 16)),
-        "STATUS": 4 if not die_fail else int(rng.integers(5, 8)),
-        "ERROR_CODE": 0 if not die_fail else int(rng.integers(1, 256)),
+        "MODE": mode,
+        "VOLTAGE_TRIM": trim,
+        "FREQ_DIV": div,
+        "STATUS": 4,
+        "ERROR_CODE": 0,
         "REVISION": 0xA0,
     }
+    expected = _pack_register(base)
+
+    actual_fields = dict(base)
+    if die_fail:
+        actual_fields["STATUS"] = int(rng.integers(5, 8))
+        actual_fields["ERROR_CODE"] = int(rng.integers(1, 256))
+    actual = _pack_register(actual_fields)
+    if weak:
+        actual |= 1 << 15  # sticky weak flag outside named STATUS enum
+    return actual & 0xFFFFFFFF, expected & 0xFFFFFFFF
+
+
+def _pack_register(fields: dict[str, int]) -> int:
     raw = 0
     for name, lsb, width in load_spec_rows():
         raw |= (fields[name] & ((1 << width) - 1)) << lsb
-    if weak:  # nudge a status bit so weak dies look different when decoded
-        raw |= 1 << 15
-    return raw & 0xFFFFFFFF
+    return raw
 
 
 def _bin_of(die_fail: bool, weak: bool) -> int:

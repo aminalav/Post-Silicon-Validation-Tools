@@ -8,6 +8,7 @@ critical data path.
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 
 from sep import core
@@ -35,9 +36,10 @@ def ingest(lot_dir: str | Path, db_url: str = "sqlite:///sep.db", *, reset: bool
 
     counts = {"wafers": 0, "dies": 0, "tests": 0, "measurements": 0,
               "schmoo": 0, "reg_dumps": 0}
+    meta = _read_lot_meta(lot_dir)
 
     with get_session(engine) as session:
-        lot = Lot(lot_id=lot_dir.name, product="SEP-SOC-A0")
+        lot = Lot(lot_id=meta["lot_id"], product=meta["product"])
         session.add(lot)
         session.flush()
 
@@ -108,11 +110,13 @@ def ingest(lot_dir: str | Path, db_url: str = "sqlite:///sep.db", *, reset: bool
 
         # --- registers.csv ---
         for row in _read_csv(lot_dir / "registers.csv"):
+            expected = row.get("expected_value")
             session.add(
                 RegDump(
                     die_pk=die_map[row["die_id"]].id,
                     reg_name=row["reg_name"],
                     raw_value=int(row["raw_value"], 16),
+                    expected_value=int(expected, 16) if expected else None,
                 )
             )
             counts["reg_dumps"] += 1
@@ -120,6 +124,17 @@ def ingest(lot_dir: str | Path, db_url: str = "sqlite:///sep.db", *, reset: bool
         session.commit()
 
     return counts
+
+
+def _read_lot_meta(lot_dir: Path) -> dict:
+    meta_path = lot_dir / "lot.json"
+    if meta_path.exists():
+        data = json.loads(meta_path.read_text(encoding="utf-8"))
+        return {
+            "lot_id": data.get("lot_id", lot_dir.name),
+            "product": data.get("product", "SEP-SOC-A0"),
+        }
+    return {"lot_id": lot_dir.name, "product": "SEP-SOC-A0"}
 
 
 def _read_csv(path: Path):

@@ -20,6 +20,12 @@ jobs:
       - name: Install build toolchain
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
 
+      - name: Native C++ unit tests
+        run: |
+          cmake -S cpp/tests -B build-cpp-tests -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-cpp-tests
+          ctest --test-dir build-cpp-tests --output-on-failure
+
       - name: Install package (compiles pybind11 extension)
         run: pip install -e ".[dev]"
 
@@ -31,6 +37,14 @@ jobs:
 
       - name: Run tests
         run: pytest -q
+
+      - name: PDF report (optional path)
+        run: |
+          sudo apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info
+          pip install -e ".[dev,reports]"
+          sep demo
+          sep report LOT001 --pdf --out reports/ci_report
+          test -f reports/ci_report.pdf
 
   frontend:
     name: Build React dashboard
