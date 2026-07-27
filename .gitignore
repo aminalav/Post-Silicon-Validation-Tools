@@ -10,6 +10,7 @@ venv/
 
 # C++ / CMake
 build/
+build-cpp-tests/
 *.so
 *.dylib
 *.o

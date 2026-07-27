@@ -40,3 +40,12 @@ def decode_value(raw: int, spec: list | None = None) -> list[dict]:
         {"name": f.name, "value": int(f.value), "lsb": int(f.lsb), "width": int(f.width)}
         for f in core.decode(raw, spec)
     ]
+
+
+def compare_values(expected: int, actual: int, spec: list | None = None) -> list[dict]:
+    """Return fields that differ between expected and actual raw values."""
+    spec = spec or default_spec()
+    return [
+        {"name": m.name, "expected": int(m.expected), "actual": int(m.actual)}
+        for m in core.compare(expected, actual, spec)
+    ]
